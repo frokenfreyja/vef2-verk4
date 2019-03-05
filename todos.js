@@ -1,8 +1,7 @@
 const { Client } = require('pg');
 const validator = require('validator');
 const xss = require('xss');
-
-const connectionString = process.env.DATABASE_URL;
+const { query } = require('./db');
 
 /* hjálparföll */
 
@@ -60,32 +59,6 @@ function validateTodo({ title, position, completed, due } = {}) {
   }
 
   return errors;
-}
-
-/**
- * Execute an SQL query.
- *
- * @param {string} sqlQuery - SQL query to execute
- * @param {array} [values=[]] - Values for parameterized query
- *
- * @returns {Promise} Promise representing the result of the SQL query
- */
-async function query(sqlQuery, values = []) {
-  const client = new Client({ connectionString });
-  await client.connect();
-
-  let result;
-
-  try {
-    result = await client.query(sqlQuery, values);
-  } catch (err) {
-    console.error('Error executing query', err);
-    throw err;
-  } finally {
-    await client.end();
-  }
-
-  return result;
 }
 
 /* api */

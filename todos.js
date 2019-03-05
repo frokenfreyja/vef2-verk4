@@ -45,7 +45,7 @@ function validateNote({ title, position, completed, due }) {
     });
   }
   
-  if (isEmpty(due)) {
+  if (!isEmpty(due)) {
     if (typeof due !== 'string' || !validator.isISO8601(due)) {
       errors.push({
         field: 'due',
@@ -129,13 +129,15 @@ async function create({ title, position, completed, due} = {}) {
  *
  * @returns {Promise} Promise representing an array of all todo objects
  */
-async function readAll() {
-  const sqlQuery = 'SELECT id, title, due, position, completed, created, updated FROM todos';
+async function readAll(order = 'ASC', completed = null) {
+  const orderString = order.toLowerCase() === 'desc' ? 'DESC' : 'ASC';
 
-  const result = await query(sqlQuery);
-
-  return result.rows;
+  if (completed === 'false' || completed === 'true') {
+    return query(`SELECT * FROM todos WHERE completed = $1 ORDER BY position ${orderString}`, [completed]);
+  }
+  return query(`SELECT * FROM todos ORDER BY position ${orderString}`, []);
 }
+
 
 /**
  * Read a single todo.
@@ -218,31 +220,10 @@ async function del(id) {
   return result.rowCount === 1;
 }
 
-/**
- * Read a single todo.
- *
- * @param {number} id - Id of todo
- *
- * @returns {Promise} Promise representing the todo object or null if not found
- */
-async function readOneQuery(id) {
-  const sqlQuery = 'SELECT id, title, due, position, completed, created, updated FROM todos WHERE completed = $1';
-
-  const result = await query(sqlQuery, [id]);
-
-  if (result.rows.length === 0) {
-    return null;
-  }
-
-  return result.rows[0];
-}
-
-
 module.exports = {
   create,
   readAll,
   readOne,
   update,
-  del,
-  readOneQuery,
+  del
 };

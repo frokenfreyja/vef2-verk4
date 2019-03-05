@@ -7,7 +7,6 @@ const {
   readOne,
   update,
   del,
-  readOneQuery,
 } = require('./todos');
 
 const router = express.Router();
@@ -18,9 +17,11 @@ function catchErrors(fn) {
 
 /* todo útfæra vefþjónustuskil */
 async function todosRoute(req, res) {
-  const todos = await readAll();
+  const {order, completed} = req.query;
 
-  return res.status(200).json(todos);
+  const todos = await readAll(order, completed);
+  
+  return res.status(200).json(todos.rows);
 }
 
 async function createRoute(req, res) {
@@ -44,10 +45,10 @@ async function todoRoute(req, res) {
     return res.json(todo);
   }
 
-  return res.status(404).json({ error: 'Todo not found' });
+  return res.status(404).json({ error: 'Verkefni er ekki til' });
 }
 
-async function putRoute(req, res) {
+async function patchRoute(req, res) {
   const { id } = req.params;
   const { title, position, completed, due } = req.body;
 
@@ -58,7 +59,7 @@ async function putRoute(req, res) {
   }
 
   if (!result.success && result.notFound) {
-    return res.status(404).json({ error: 'Todo not found' });
+    return res.status(404).json({ error: 'Verkefni er ekki til' });
   }
 
   return res.status(201).json(result.item);
@@ -73,13 +74,13 @@ async function deleteRoute(req, res) {
     return res.status(204).json({});
   }
 
-  return res.status(404).json({ error: 'Todo not found' });
+  return res.status(404).json({ error: 'Verkefni er ekki til' });
 }
 
 router.get('/', catchErrors(todosRoute));
 router.post('/', catchErrors(createRoute));
 router.get('/:id', catchErrors(todoRoute));
-router.put('/:id', catchErrors(putRoute));
+router.patch('/:id', catchErrors(patchRoute));
 router.delete('/:id', catchErrors(deleteRoute));
 
 module.exports = router;

@@ -23,13 +23,14 @@ function isEmpty(s) {
  */
 function validateTodo({ title, position, completed, due } = {}) {
   const errors = [];
-
+  if (!isEmpty(due)) {
     if (typeof title !== 'string' || !validator.isLength(title, { min: 1, max: 128 })) {
       errors.push({
         field: 'title',
         message: 'Titill verður að vera strengur sem er 1 til 128 stafir',
       });
     }
+  }
 
   if (!isEmpty(due)) {
     if (typeof due !== 'string' || !validator.isISO8601(due)) {

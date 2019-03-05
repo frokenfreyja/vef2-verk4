@@ -17,10 +17,10 @@ function catchErrors(fn) {
 
 /* todo útfæra vefþjónustuskil */
 async function todosRoute(req, res) {
-  const {order, completed} = req.query;
+  const { order, completed } = req.query;
 
   const todos = await readAll(order, completed);
-  
+
   return res.status(200).json(todos.rows);
 }
 

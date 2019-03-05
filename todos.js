@@ -21,14 +21,21 @@ function isEmpty(s) {
  *
  * @returns {array} Array of validation of errors, empty error if no errors
  */
-function validateTodo({ title, position, completed, due }) {
+function validateTodo({ title, position, completed, due } = {}) {
   const errors = [];
 
-  if (!isEmpty(title)) {
     if (typeof title !== 'string' || !validator.isLength(title, { min: 1, max: 128 })) {
       errors.push({
         field: 'title',
         message: 'Titill verður að vera strengur sem er 1 til 128 stafir',
+      });
+    }
+
+  if (!isEmpty(due)) {
+    if (typeof due !== 'string' || !validator.isISO8601(due)) {
+      errors.push({
+        field: 'due',
+        message: 'Dagsetning verður að vera gild ISO 8601 dagsetning',
       });
     }
   }
@@ -41,20 +48,12 @@ function validateTodo({ title, position, completed, due }) {
       });
     }
   }
+
   if (!isEmpty(completed)) {
     if (typeof completed !== 'boolean') {
       errors.push({
         field: 'completed',
         message: 'Lokið verður að vera boolean gildi',
-      });
-    }
-  }
-  
-  if (!isEmpty(due)) {
-    if (typeof due !== 'string' || !validator.isISO8601(due)) {
-      errors.push({
-        field: 'due',
-        message: 'Dagsetning verður að vera gild ISO 8601 dagsetning',
       });
     }
   }
@@ -101,7 +100,7 @@ async function query(sqlQuery, values = []) {
  *
  * @returns {Promise} Promise representing the object result of creating the todo
  */
-async function create({ title, position, completed, due} = {}) {
+async function create({ title, position, completed = false, due} = {}) {
   const validation = validateTodo({ title, position, completed, due });
 
   if (validation.length > 0) {
@@ -112,13 +111,8 @@ async function create({ title, position, completed, due} = {}) {
     };
   }
 
-  const cleanTitle = xss(title);
-  const cleanPosition = xss(position);
-  const cleanCompleted = xss(completed);
-  const cleanDue = xss(due);
-
   const sqlQuery = 'INSERT INTO todos(title, position, completed, due) VALUES($1, $2, $3, $4) RETURNING *';
-  const values = [cleanTitle, cleanPosition, cleanCompleted, cleanDue];
+  const values = [xss(title), xss(position), completed, xss(due)];
 
   const result = await query(sqlQuery, values);
 
@@ -175,49 +169,6 @@ async function readOne(id) {
  *
  * @returns {Promise} Promise representing the object result of creating the todo
  */
-
-/*
-async function update(id, { title, due, position, completed } = {}) {
-  const validation = validateNote({ title, due, position, completed });
-
-  if(!validation) {
-    console.log('hallo', validation);
-  } else {
-  }
-
-  if (validation.length > 0) {
-    return {
-      success: false,
-      validation,
-    };
-  }
-  const cleanTitle = xss(title);
-  const cleanDue = xss(due);
-  const cleanPosition = xss(position);
-  const cleanCompleted = xss(completed);
-
-  const sqlQuery = 'UPDATE todos SET title = $1, due = $2, position = $3, completed = $4 WHERE id = $5 RETURNING *';
-  const values = [cleanTitle, cleanDue, cleanPosition, cleanCompleted, id];
-
-  const result = await query(sqlQuery, values);
-
-  if (result.rowCount === 0) {
-    return {
-      success: false,
-      validation: [],
-      notFound: true,
-    };
-  }
-
-  return {
-    success: true,
-    validation: [],
-    item: result.rows[0],
-  };
-}
-*/
-
-
 async function update(id, { title, position, completed, due } = {}) {
   const result = await query('SELECT * FROM todos where id = $1', [id]);
 
@@ -226,32 +177,37 @@ async function update(id, { title, position, completed, due } = {}) {
       success: false,
       notFound: true,
       validation: [],
+      completed: true,
     };
   }
 
-  const validationResult = await validateTodo({ title, due, position, completed });
+  const validationResult = await validateTodo({ title, position, completed, due });
 
   if (validationResult.length > 0) {
     return {
       success: false,
       notFound: false,
       validation: validationResult,
+      completed: true,
     };
   }
 
   const changedColumns = [
     !isEmpty(title) ? 'title' : null,
-    !isEmpty(due) ? 'due' : null,
     !isEmpty(position) ? 'position' : null,
+    !isEmpty(due) ? 'due' : null,
     !isEmpty(completed) ? 'completed' : null,
   ].filter(Boolean);
 
   const changedValues = [
     !isEmpty(title) ? xss(title) : null,
-    !isEmpty(due) ? xss(due) : null,
     !isEmpty(position) ? xss(position) : null,
-    !isEmpty(completed) ? xss(completed) : null,
+    !isEmpty(due) ? xss(due) : null,
   ].filter(Boolean);
+
+  if (completed || completed === false) {
+    changedValues.push(completed);
+  }
 
   const updates = [id, ...changedValues];
 
@@ -262,14 +218,14 @@ async function update(id, { title, position, completed, due } = {}) {
   console.log(updates);
   console.log(updatedColumnsQuery);
 
-  const q = `
+  const sqlQuery = `
     UPDATE todos
-    SET ${updatedColumnsQuery.join(', ')}
+    SET ${updatedColumnsQuery.join(', ')}, updated = current_timestamp
     WHERE id = $1
-    RETURNING id, title, due, position, completed`;
-  console.log(q);
+    RETURNING title, position, completed, due, created, updated`;
+  console.log(sqlQuery);
 
-  const updateResult = await query(q, updates);
+  const updateResult = await query(sqlQuery, updates);
   console.log(updateResult);
   return {
     success: true,

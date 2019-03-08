@@ -208,15 +208,14 @@ async function update(id, { title, position, completed, due } = {}) {
   const changedColumns = [
     !isEmpty(title) ? 'title' : null,
     !isEmpty(position) ? 'position' : null,
-    !isEmpty(due) ? 'due' : null,
     !isEmpty(completed) ? 'completed' : null,
+    !isEmpty(due) ? 'due' : null,
   ].filter(Boolean);
 
   const changedValues = [
     !isEmpty(title) ? xss(title) : null,
     !isEmpty(position) ? xss(position) : null,
     !isEmpty(due) ? xss(due) : null,
-    xss(due) === '' ? null : xss(due),
   ].filter(Boolean);
 
   if (completed || completed === false) {

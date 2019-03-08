@@ -218,7 +218,7 @@ async function update(id, { title, position, completed, due } = {}) {
     !isEmpty(due) ? xss(due) : null,
   ].filter(Boolean);
 
-  console.log("due: ",due);
+  console.log('due: ', due);
 
   if (completed || completed === false) {
     changedValues.push(completed);
@@ -228,7 +228,7 @@ async function update(id, { title, position, completed, due } = {}) {
 
   const updatedColumnsQuery = changedColumns.map((column, i) => `${column} = $${i + 2}`);
 
-  console.log("Updates: ", updates);
+  console.log('Updates: ', updatedColumnsQuery);
 
   const sqlQuery = `
     UPDATE todos

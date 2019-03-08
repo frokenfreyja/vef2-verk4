@@ -15,7 +15,12 @@ function catchErrors(fn) {
   return (req, res, next) => fn(req, res, next).catch(next);
 }
 
-/* todo útfæra vefþjónustuskil */
+/**
+ * Middleware that handles GET requests to './'
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {Object} returns array containing JSON objects for todos
+ */
 async function todosRoute(req, res) {
   const { order, completed } = req.query;
 
@@ -24,6 +29,12 @@ async function todosRoute(req, res) {
   return res.status(200).json(todos.rows);
 }
 
+/**
+ * Middleware that handles creating a new todo via POST requests to './'
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {Object} returns a single JSON object for a single todo
+ */
 async function createRoute(req, res) {
   const { title, position, completed, due } = req.body;
 
@@ -36,6 +47,12 @@ async function createRoute(req, res) {
   return res.status(201).json(result.item);
 }
 
+/**
+ * Middleware that handles get requests to './:id'
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {Object} returns a single JSON object for a single todo
+ */
 async function todoRoute(req, res) {
   const { id } = req.params;
 
@@ -48,6 +65,12 @@ async function todoRoute(req, res) {
   return res.status(404).json({ error: 'Verkefni er ekki til' });
 }
 
+/**
+ * Middleware that handles updating data via PATCH requests to './:id'
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {Object} returns a single JSON object for a single todo
+ */
 async function patchRoute(req, res) {
   const { id } = req.params;
   const { title, position, completed, due } = req.body;
@@ -65,6 +88,12 @@ async function patchRoute(req, res) {
   return res.status(201).json(result.item);
 }
 
+/**
+ * Middleware that handles delete requests to './:id'
+ * @param {object} req Request object
+ * @param {object} res Response object
+ * @returns {Object} returns 204 (no content) message if no error
+ */
 async function deleteRoute(req, res) {
   const { id } = req.params;
 

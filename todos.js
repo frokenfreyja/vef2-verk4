@@ -226,7 +226,6 @@ async function update(id, { title, position, completed, due } = {}) {
 
   const updatedColumnsQuery = changedColumns.map((column, i) => `${column} = $${i + 2}`);
 
-
   const sqlQuery = `
     UPDATE todos
     SET ${updatedColumnsQuery.join(', ')}, updated = current_timestamp

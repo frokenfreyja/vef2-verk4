@@ -22,7 +22,7 @@ function isEmpty(s) {
  */
 function validateTodo({ title, position, completed, due } = {}) {
   const errors = [];
-  if (!isEmpty(due)) {
+  if (!isEmpty(title)) {
     if (typeof title !== 'string' || !validator.isLength(title, { min: 1, max: 128 })) {
       errors.push({
         field: 'title',
@@ -32,7 +32,46 @@ function validateTodo({ title, position, completed, due } = {}) {
   }
 
   if (!isEmpty(due)) {
-    if (typeof due !== 'string' || !validator.isISO8601(due)) {
+    if (!validator.isISO8601(due)) {
+      errors.push({
+        field: 'due',
+        message: 'Dagsetning verður að vera gild ISO 8601 dagsetning',
+      });
+    }
+  }
+
+  if (!isEmpty(position)) {
+    if (typeof position !== 'number' || position < 0) {
+      errors.push({
+        field: 'position',
+        message: 'Staðsetning verður að vera heiltala stærri eða jöfn 0',
+      });
+    }
+  }
+
+  if (!isEmpty(completed)) {
+    if (typeof completed !== 'boolean') {
+      errors.push({
+        field: 'completed',
+        message: 'Lokið verður að vera boolean gildi',
+      });
+    }
+  }
+
+  return errors;
+}
+
+function validateCreate({ title, position, completed, due } = {}) {
+  const errors = [];
+  if (typeof title !== 'string' || !validator.isLength(title, { min: 1, max: 128 })) {
+    errors.push({
+      field: 'title',
+      message: 'Titill verður að vera strengur sem er 1 til 128 stafir',
+    });
+  }
+
+  if (!isEmpty(due)) {
+    if (!validator.isISO8601(due)) {
       errors.push({
         field: 'due',
         message: 'Dagsetning verður að vera gild ISO 8601 dagsetning',
@@ -75,7 +114,7 @@ function validateTodo({ title, position, completed, due } = {}) {
  * @returns {Promise} Promise representing the object result of creating the todo
  */
 async function create({ title, position, completed = false, due } = {}) {
-  const validation = validateTodo({ title, position, completed, due });
+  const validation = validateCreate({ title, position, completed, due });
 
   if (validation.length > 0) {
     return {
@@ -87,7 +126,7 @@ async function create({ title, position, completed = false, due } = {}) {
 
   const sqlQuery = 'INSERT INTO todos(title, position, completed, due) VALUES($1, $2, $3, $4) RETURNING *';
 
-  const values = [xss(title), xss(position), completed, xss(due)];
+  const values = [xss(title), xss(position), completed, xss(due) === '' ? null : xss(due)];
 
   const result = await query(sqlQuery, values);
 

@@ -1,4 +1,3 @@
-const { Client } = require('pg');
 const validator = require('validator');
 const xss = require('xss');
 const { query } = require('./db');
@@ -217,6 +216,7 @@ async function update(id, { title, position, completed, due } = {}) {
     !isEmpty(title) ? xss(title) : null,
     !isEmpty(position) ? xss(position) : null,
     !isEmpty(due) ? xss(due) : null,
+    xss(due) === '' ? null : xss(due),
   ].filter(Boolean);
 
   if (completed || completed === false) {
